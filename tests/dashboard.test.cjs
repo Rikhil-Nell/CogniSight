@@ -6,6 +6,7 @@ const vm = require('node:vm');
 const fs = require('node:fs');
 const path = require('node:path');
 const source = fs.readFileSync(path.join(__dirname,'../src/cognisight/caregiver/static/dashboard.js'),'utf8');
+const indoorSource = fs.readFileSync(path.join(__dirname,'../src/cognisight/caregiver/static/indoor_map.js'),'utf8');
 const flush = () => new Promise(resolve => setImmediate(resolve));
 
 class Element {
@@ -88,4 +89,114 @@ test('healthy refreshes are faster than recognition expiry',async()=>{
   app.tick(.6);
   assert.equal(app.elements.get('people').children.length,1);
   assert.doesNotMatch(app.elements.get('recognition-status').textContent,/stale/i);
+});
+
+class MapElement {
+  constructor() {
+    this.children=[];
+    this.listeners={};
+    this.attributes={};
+    this.textContent='';
+    this.value='';
+    this.disabled=false;
+    this.className='';
+  }
+  appendChild(child) { this.children.push(child); return child; }
+  replaceChildren(...children) { this.children=children; }
+  setAttribute(name,value) { this.attributes[name]=String(value); }
+  getAttribute(name) { return this.attributes[name]; }
+  addEventListener(name,callback) {
+    (this.listeners[name] ||= []).push(callback);
+  }
+  async dispatch(name) {
+    const event={target:this,defaultPrevented:false,preventDefault(){this.defaultPrevented=true;}};
+    for (const callback of this.listeners[name] || []) await callback(event);
+    return event;
+  }
+  querySelectorAll(selector) {
+    const className=selector.slice(1);
+    const found=[];
+    const visit=item=>{
+      for (const child of item.children) {
+        if (child.className.split(/\s+/).includes(className)) found.push(child);
+        visit(child);
+      }
+    };
+    visit(this);
+    return found;
+  }
+}
+
+async function bootMap(loadSucceeds=true) {
+  const elements=new Map(), listeners={};
+  const document={
+    getElementById(id) {
+      if(!elements.has(id)) elements.set(id,new MapElement());
+      return elements.get(id);
+    },
+    createElement() { return new MapElement(); }
+  };
+  document.getElementById('map-csrf-token').value='synthetic-csrf-token';
+  let uuid=0;
+  const requests=[];
+  vm.runInNewContext(indoorSource,{
+    document,
+    window:{addEventListener(name,callback){listeners[name]=callback;}},
+    crypto:{randomUUID(){uuid+=1;return `00000000-0000-4000-8000-${String(uuid).padStart(12,'0')}`;}},
+    fetch:async(url,options={})=>{
+      requests.push({url,options});
+      if(options.method==='PUT') {
+        const map=JSON.parse(options.body);
+        return {ok:true,status:200,json:async()=>({saved:true,map})};
+      }
+      if(!loadSucceeds) return {ok:false,status:503,json:async()=>({error:'map_unavailable'})};
+      return {ok:true,status:200,json:async()=>({map:null})};
+    }
+  });
+  await flush();
+  return {elements,requests};
+}
+
+test('indoor map editor creates rooms, links, landmark metadata and saves with CSRF',async()=>{
+  const app=await bootMap();
+  const byId=id=>app.elements.get(id);
+  assert.match(byId('map-status').textContent,/Name the home map/);
+  const name=byId('map-name');
+  name.value='Synthetic home';
+  await name.dispatch('input');
+  await byId('add-room').dispatch('click');
+  let roomInputs=byId('rooms-list').querySelectorAll('.map-control');
+  roomInputs[0].value='Hall';
+  await roomInputs[0].dispatch('input');
+  await byId('add-room').dispatch('click');
+  roomInputs=byId('rooms-list').querySelectorAll('.map-control');
+  roomInputs[1].value='Kitchen';
+  await roomInputs[1].dispatch('input');
+  await byId('add-connection').dispatch('click');
+  const connectionSelects=byId('connections-list').querySelectorAll('.map-control');
+  assert.equal(connectionSelects[0].children.length,2);
+  await byId('add-landmark').dispatch('click');
+  const landmarkInputs=byId('landmarks-list').querySelectorAll('.map-control');
+  landmarkInputs[0].value='LM-01';
+  await landmarkInputs[0].dispatch('input');
+  landmarkInputs[1].value='Hall marker';
+  await landmarkInputs[1].dispatch('input');
+  await byId('save-map').dispatch('click');
+  const save=app.requests.find(request=>request.options.method==='PUT');
+  assert.ok(save);
+  assert.equal(save.options.headers['X-CSRFToken'],'synthetic-csrf-token');
+  const saved=JSON.parse(save.options.body);
+  assert.equal(saved.rooms.length,2);
+  assert.equal(saved.connections[0].kind,'doorway');
+  assert.equal(saved.landmarks[0].id,'LM-01');
+  assert.match(byId('map-status').textContent,/Map saved on this Pi/);
+  assert.equal(byId('export-map').getAttribute('aria-disabled'),'false');
+});
+
+test('failed map load does not enable a blank map for overwriting',async()=>{
+  const app=await bootMap(false);
+  assert.match(app.elements.get('map-status').textContent,/could not be loaded/);
+  assert.equal(app.elements.get('add-room').disabled,true);
+  await app.elements.get('add-room').dispatch('click');
+  assert.equal(app.requests.filter(request=>request.options.method==='PUT').length,0);
 });

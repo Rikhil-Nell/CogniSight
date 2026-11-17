@@ -1,9 +1,9 @@
 # CogniSight module contracts (schema 1)
 
-Implemented boundaries for issues #2, #3, #4 and #6. These describe the software,
-not successful Pi/device qualification. Indoor issue #5 is deferred. The user
-approved implementation of #6/#7 on 12 November 2026; this records user approval,
-not separate sign-off from every module owner.
+Implemented boundaries for issues #2, #3, #4 and #6, plus the first indoor-map
+authoring milestone. These describe the software, not successful Pi/device
+qualification or separate sign-off from every module owner. Indoor localization
+and guidance remain unimplemented.
 
 ## Ownership and process boundaries
 
@@ -11,8 +11,8 @@ not separate sign-off from every module owner.
 | --- | --- | --- | --- |
 | Meghana | `recognition/` | One camera, enrolled verified profiles, explicit audio routes | Recognition/context, best-effort events, camera/model/storage health |
 | Sharanya | `navigation/` | Local GPSD complete TPV messages | Verified location/status or explicit no-fix/disconnected/invalid/stale |
-| Jahnvi | `caregiver/` and integration | Runtime snapshots, authenticated same-origin requests | Read-only allowlisted schema-1 dashboard |
-| Jahnvi and Archisha | Indoor, deferred | No producer | Always unavailable / not_integrated |
+| Jahnvi | `caregiver/` and integration | Runtime snapshots, authenticated same-origin requests | Read-only allowlisted schema-1 monitoring plus separate map editor |
+| Jahnvi and Archisha | Indoor map schema/store | Caregiver-authored rooms, connections, landmark metadata | Validated private map file; no localization producer |
 
 One Runtime owns Vision, AudioEngine and optional NavigationService. Vision owns
 one Picamera2 instance/capture thread. Runtime serializes model calls and enrollment;
@@ -143,6 +143,15 @@ Indoor only emits common fields. Its `status`, `reason` and `data_source` are
 always overwritten to unavailable / not_integrated / unavailable by caregiver
 projection. No destination, marker, route or guidance is inferred.
 
+The indoor map editor is a separate configuration API, not an addition to the
+runtime snapshot. Schema v1 stores one room graph, bidirectional doorway or
+corridor connections, and unique landmark metadata. The authenticated dashboard
+validates and saves it outside the repository in a private JSON file. The
+schema, API routes, and validation rules are documented in
+[Indoor home-map configuration](../indoor/README.md). The map does not provide
+camera detection, localization, route calculation, or spoken directions, and
+does not change indoor snapshot status.
+
 `health` is a dictionary of bounded machine codes, limited to `camera`,
 `microphone`, `playback`, `model`, `storage`, `clock`, `runtime`, `gpsd`,
 `navigation`. No raw exception messages are exposed.
@@ -190,8 +199,9 @@ Pi qualification rather than assuming package defaults.
 Connected browser polling is 500ms; failure retries are 5s, fetch abort is 4s,
 requests do not overlap, rendering advances evidence age with the browser clock.
 Authentication/network failures clear current personal data; successful HTTP does
-not renew source evidence. Monitoring exposes no enrollment, audio, image or
-control endpoint. SQLite, models, private configuration and secrets stay local;
+not renew source evidence. The monitoring snapshot exposes no enrollment, audio,
+image or wearer-control endpoint. Separate authenticated map routes modify only
+indoor configuration. SQLite, models, private configuration and secrets stay local;
 state directory 0700, secret files 0600, service umask 0077.
 
 Startup validates state/configuration and takes one state-directory process lock,
@@ -220,8 +230,8 @@ and lifecycle regressions. Software tests do not establish recognition accuracy,
 Pi compatibility, live voice response or phone TLS trust. See
 [validation](../VALIDATION.md) and [hardware plan](../hardware/ISSUE-7-PLAN.md).
 
-Future indoor work needs approved shared-frame fan-out, evidence/expiry contracts,
-caregiver schema handling and speech validity rules inside the existing output
-owner. Do not add a second camera reader or speech arbitrator. Any cross-module
+Future indoor localization needs approved shared-frame fan-out, evidence/expiry
+contracts and speech validity rules inside the existing output owner. Do not add
+a second camera reader or speech arbitrator. Any cross-module
 schema/interface change requires coordinated owner review; never claim owner
 sign-off merely because this document exists.

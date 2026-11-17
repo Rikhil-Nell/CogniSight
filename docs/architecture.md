@@ -1,8 +1,6 @@
 # CogniSight system architecture
 
-This is the implemented local-Pi design for issues #2, #3, #4 and #6, following the user's approval of #6/#7 on 12 November 2026. It does not establish successful physical qualification or separate approval by every module owner. Indoor issue #5 remains deferred.
-
-![CogniSight local system architecture](system/cognisight-architecture.png)
+This is the implemented local-Pi design for issues #2, #3, #4, #6, and the first indoor-map-authoring milestone. It does not establish successful physical qualification or separate approval by every module owner. Indoor localization, routes, and spoken directions remain unimplemented.
 
 Open the [editable draw.io file](system/cognisight-architecture.drawio) in diagrams.net to change the diagram. The [generator](system/generate_architecture.py) uses [helpers](system/diagram_helpers.py) adapted from the user's architecture-diagram skill. Regenerate from the repository root:
 
@@ -10,7 +8,7 @@ Open the [editable draw.io file](system/cognisight-architecture.drawio) in diagr
 python3 docs/system/generate_architecture.py
 ```
 
-The generator validates XML and edge endpoints. The checked PNG was rendered with the official diagrams.net viewer and visually inspected for labels, arrows and clipping. Regenerating the XML does not automatically refresh the PNG; export and inspect it again after diagram edits. All shapes are neutral because the project has no AWS services. The draw.io connector was not exposed in this session; the editable file was generated locally. No source/reference architecture image was supplied.
+The generator validates XML and edge endpoints. The editable source now includes the indoor map editor and its private JSON file. The [previous PNG preview](system/cognisight-architecture.png) does not include that path and is not shown here as a current diagram; no local diagrams.net renderer is available in this environment. Render and inspect a fresh PNG after diagram edits. All shapes are neutral because the project has no AWS services. No source/reference architecture image was supplied.
 
 ## Boundaries and flows
 
@@ -19,12 +17,13 @@ The generator validates XML and edge endpoints. The checked PNG was rendered wit
 | 1 | One Picamera2 owner supplies owned BGR frames through a capacity-one mailbox. Runtime serializes recognition and enrollment inference. |
 | 2 | An independently owned local GPSD client validates location/status. The reported SIMA7670C/RS232 board is not yet proven to provide positioning, so leave navigation disabled. |
 | 3 | Recognition and outdoor evidence enter the runtime snapshot and caregiver allowlist. Original capture/receiver age governs expiry; HTTP success does not renew evidence. Last-known position remains historical. |
-| 4 | One caregiver phone on the same Wi-Fi uses authenticated HTTPS through Caddy. Only the read-only dashboard backend is proxied. |
+| 4 | One caregiver phone on the same Wi-Fi uses authenticated HTTPS through Caddy for read-only monitoring and authenticated indoor-map configuration. |
 | 5 | A verified USB microphone route feeds offline Vosk commands. The owned AUX headset needs a compatible USB sound adapter and verified microphone. |
 | 6 | One bounded speech queue feeds Piper and the explicit USB output. Automatic speech expires with visibility; explicit speech uses existing recency rules. Stop invalidates the generation. |
 | 7 | Local enrollment is available through a loopback-only SSH tunnel. Verified profiles and private SQLite state supply recognition/context. |
+| 8 | The authenticated caregiver editor stores a versioned indoor room graph and landmark metadata in a private local JSON file; it does not produce location observations. |
 
-Read [module contracts](system/CONTRACTS.md) for actual schema-1 fields, time/error semantics, queue bounds, ownership and extension rules. There is no second camera consumer, indoor producer, message broker, cloud inference, walking-route service or emergency guarantee.
+Read [module contracts](system/CONTRACTS.md) for actual schema-1 fields, time/error semantics, queue bounds, ownership and extension rules. See the [indoor map schema and API](indoor/README.md). There is no second camera consumer, indoor localization producer, route planner, message broker, cloud inference, walking-route service or emergency guarantee.
 
 ## HTTP and shutdown limits
 
@@ -36,7 +35,7 @@ Runtime stop cancels work and attempts every device owner. HTTP listeners/channe
 
 Diagram daggers mark unverified hardware identity or paths: exact camera sensor/cable compatibility, positioning capability/interface, and USB adapter/microphone compatibility. The free ribbon end had 22 visible contacts; the camera-side end was hidden. The AUX headset is owned; the required USB adapter is not yet selected. No guessed RS232/GPIO wiring or modem commands are provided.
 
-The Pi is reported as Pi 5/8 GB, Raspberry Pi OS 64-bit, SSH user `jahnvi`, hostname `cognisight`; installed OS release/Python and actual IP are pending. Use the [simple SSH runbook](hardware/PI-RUNBOOK.md) and [hardware evidence checklist](hardware/README.md). Source coverage includes the physical endpoints, single device owners, SQLite/models, all seven paths, loopback/LAN ports, control versus data arrows, schema/freshness/queue rules, module owners and deferred indoor state.
+The Pi is reported as Pi 5/8 GB, Raspberry Pi OS 64-bit, SSH user `jahnvi`, hostname `cognisight`; installed OS release/Python and actual IP are pending. Use the [simple SSH runbook](hardware/PI-RUNBOOK.md) and [hardware evidence checklist](hardware/README.md). Source coverage includes the physical endpoints, single device owners, SQLite/models, all eight paths, loopback/LAN ports, control versus data arrows, schema/freshness/queue rules, module owners and the map-only indoor boundary.
 
 The [contributor handoff](../NEXT_AGENT_README.md) records current release and
 Git instructions. See [validation](VALIDATION.md) for exact software results and unmeasured hardware/load/phone gates. Do not close #7 or #8 merely because this diagram or passing software tests exist.

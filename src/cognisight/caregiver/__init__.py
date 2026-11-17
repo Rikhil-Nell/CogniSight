@@ -1,4 +1,4 @@
-"""Read-only caregiver monitoring; camera/enrollment remain private to the Pi."""
+"""Caregiver monitoring and indoor map authoring; enrollment stays on the Pi."""
 
 from .web import create_dashboard_app, create_dashboard_blueprint
 

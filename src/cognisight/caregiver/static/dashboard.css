@@ -4,3 +4,24 @@
 .panel-header p,.health-list dt{font-size:12px}
 .person p:nth-child(3){font-size:14px}
 @media(max-width:620px){.button-quiet{min-height:44px;font-size:12px}.status-pill,.source-label,.observation-age,.connection-strip p,.health-list dd{font-size:12px}.panel-header h2{font-size:15px}.panel-header p,.health-list dt{font-size:12px}.person p:nth-child(2){font-size:13px}.person p:nth-child(3),.empty-message,.integration-placeholder p{font-size:14px}.status-pill{padding:4px 7px}.panel-header{gap:8px}.observation-age{min-width:0}.coordinates{font-size:15px}}
+.map-link{margin-top:16px;min-height:44px}
+.map-boundary-note{margin:18px 0;color:#626a7e;font-size:13px;line-height:1.7;max-width:76em}
+.map-editor{display:grid;gap:16px}
+.map-panel .panel-header{align-items:center}
+.map-panel .panel-body{padding-top:18px;padding-bottom:18px}
+.map-label,.map-field{display:grid;gap:6px;color:#535b6e;font-size:12px;font-weight:550}
+.map-input{width:100%;min-width:0;min-height:44px;border:1px solid #cdd3df;border-radius:4px;padding:9px 11px;background:#fff;color:#323338;font:inherit;font-weight:400}
+.map-input:disabled{background:#f5f6f8;color:#777b88}
+.map-list{display:grid;gap:12px}
+.map-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto;align-items:end;gap:12px;padding:14px;border:1px solid #e6e9ef;border-radius:5px;background:#fdfdfe}
+.map-connection-row{grid-template-columns:repeat(3,minmax(0,1fr)) auto}
+.map-landmark-row{grid-template-columns:1fr 1.2fr 1fr auto}
+.map-remove{min-height:44px}
+.map-empty{font-size:13px;color:#777b88}
+.map-actions{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:8px 0 20px}
+.map-actions>p{font-size:12px;color:#626a7e;line-height:1.6}
+.map-actions>div{display:flex;align-items:center;justify-content:flex-end;gap:10px;flex-wrap:wrap}
+.map-actions button,.map-actions a{min-height:44px}
+.map-actions a[aria-disabled=true]{opacity:.55;pointer-events:none}
+@media(max-width:620px){.map-boundary-note{font-size:13px;margin:15px 0}.map-panel .panel-header{align-items:flex-start}.map-row,.map-connection-row,.map-landmark-row{grid-template-columns:minmax(0,1fr);align-items:stretch;padding:12px}.map-remove{width:100%}.map-actions{align-items:stretch;flex-direction:column}.map-actions>div{display:grid;grid-template-columns:1fr}.map-actions>div>*{width:100%}}
+@media(max-width:359px){.map-row,.map-connection-row,.map-landmark-row{padding:10px}}
