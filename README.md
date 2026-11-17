@@ -19,7 +19,7 @@ Recognises registered people and uses stored relationship and contextual informa
 Acquires verified location/status from local GPSD, distinguishing current fixes from historical locations. Walking-route directions are outside this version.
 
 ### 3. Indoor Navigation
-The caregiver dashboard can create, edit, save, and export a versioned home room map with doorway/corridor connections and landmark metadata. Camera landmark detection, indoor localization, route calculation, and spoken indoor directions are not implemented; live indoor status remains unavailable.
+The caregiver dashboard can create, edit, save, and export a versioned home room map with doorway/corridor connections and landmark metadata. It can preview the shortest room sequence between a manually selected demo start and destination. Camera landmark detection/localization and directional or spoken indoor guidance are not implemented; live indoor status remains unavailable.
 
 ### 4. Caregiver Support
 Authenticated dashboard for a caregiver phone on the same Wi-Fi, with HTTPS, read-only module monitoring, indoor map configuration, and stale/unavailable-data handling. Enrollment remains local to the Pi.

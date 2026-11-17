@@ -1,12 +1,13 @@
 # Indoor home-map configuration
 
-This is the first indoor-navigation software milestone. A caregiver can author
-one home's room graph in the authenticated dashboard, save it on the Pi, and
-download the versioned JSON document. The file is configuration only:
+The caregiver can author one home's room graph in the authenticated dashboard,
+save it on the Pi, download the versioned JSON document, and preview a shortest
+room sequence using a manually selected starting room. The map and route preview
+are configuration/demo tools:
 
-- It does not show the wearer's current location.
+- The selected starting room is demo input; it does not show the wearer's current location.
 - It does not detect landmarks with the camera or localize a person.
-- It does not calculate routes or provide spoken directions.
+- It does not provide directional or spoken guidance.
 - It does not change the existing GPSD outdoor service.
 
 The dashboard's live indoor status therefore remains
@@ -71,12 +72,31 @@ host/origin security boundary, and `Cache-Control: no-store`.
 | `GET /dashboard/indoor-map/data` | Returns `{"map": null}` before creation, otherwise the validated map |
 | `PUT /dashboard/indoor-map/data` | Accepts a schema-v1 map as `application/json`; requires the editor's CSRF token; validates and atomically saves it |
 | `GET /dashboard/indoor-map/export` | Downloads the saved map as `cognisight-home-map.json`; returns 404 if no map exists |
+| `POST /dashboard/indoor-map/route` | Accepts saved-map start/destination room IDs as `application/json`; requires the caregiver session and CSRF token; returns a BFS route preview |
 
 Validation errors return HTTP 400 without replacing the prior map. The editor,
 data, and export pages/reads require the caregiver session; unauthenticated reads
 return 401 (the editor page redirects to login). Invalid or corrupt stored maps
 fail closed, and storage failures return an error response without exposing local
 paths.
+
+## Route preview
+
+The route planner validates the existing schema-v1 document and treats every
+doorway or corridor connection as one unweighted edge. Breadth-first search
+returns the shortest room sequence; ties follow connection order in the saved
+map. The response includes ordered room `{id, name}` entries and the traversed
+connection IDs/kinds. A start equal to the destination returns a one-room route;
+disconnected rooms return `status: "unreachable"`. Unknown room IDs are rejected,
+and invalid map references/kinds fail schema validation. An empty map has no
+valid start room and cannot produce a route.
+
+The caregiver must save map edits before previewing; the endpoint always plans
+against the persisted map. The response's `start_source` is
+`manual_demo_selection`. The UI labels this input and displays the room sequence
+only—there are no coordinates, distances, orientation, left/right turns, camera
+localization, or spoken instructions. A route preview does not change the
+dashboard's live indoor status.
 
 ## Local persistence
 

@@ -127,7 +127,7 @@ class MapElement {
   }
 }
 
-async function bootMap(loadSucceeds=true) {
+async function bootMap(loadSucceeds=true, savedMap=null, routeResponse=null) {
   const elements=new Map(), listeners={};
   const document={
     getElementById(id) {
@@ -149,8 +149,11 @@ async function bootMap(loadSucceeds=true) {
         const map=JSON.parse(options.body);
         return {ok:true,status:200,json:async()=>({saved:true,map})};
       }
+      if(options.method==='POST') {
+        return {ok:true,status:200,json:async()=>routeResponse};
+      }
       if(!loadSucceeds) return {ok:false,status:503,json:async()=>({error:'map_unavailable'})};
-      return {ok:true,status:200,json:async()=>({map:null})};
+      return {ok:true,status:200,json:async()=>({map:savedMap})};
     }
   });
   await flush();
@@ -199,4 +202,48 @@ test('failed map load does not enable a blank map for overwriting',async()=>{
   assert.equal(app.elements.get('add-room').disabled,true);
   await app.elements.get('add-room').dispatch('click');
   assert.equal(app.requests.filter(request=>request.options.method==='PUT').length,0);
+});
+
+test('route preview posts saved room choices and labels the start as manual demo input',async()=>{
+  const hall='00000000-0000-4000-8000-000000000001';
+  const kitchen='00000000-0000-4000-8000-000000000002';
+  const connection='00000000-0000-4000-8000-000000000003';
+  const savedMap={
+    schema_version:1,
+    map_id:'00000000-0000-4000-8000-000000000004',
+    name:'Synthetic home',
+    rooms:[{id:hall,name:'Hall'},{id:kitchen,name:'Kitchen'}],
+    connections:[{id:connection,from_room_id:hall,to_room_id:kitchen,kind:'doorway'}],
+    landmarks:[]
+  };
+  const routeResponse={
+    status:'found',
+    start_source:'manual_demo_selection',
+    start_room:{id:hall,name:'Hall'},
+    destination_room:{id:kitchen,name:'Kitchen'},
+    rooms:[{id:hall,name:'Hall'},{id:kitchen,name:'Kitchen'}],
+    connections:[{id:connection,from_room_id:hall,to_room_id:kitchen,kind:'doorway'}]
+  };
+  const app=await bootMap(true,savedMap,routeResponse);
+  const start=app.elements.get('route-start');
+  const destination=app.elements.get('route-destination');
+  start.value=hall;
+  await start.dispatch('change');
+  destination.value=kitchen;
+  await destination.dispatch('change');
+  assert.equal(app.elements.get('preview-route').disabled,false);
+  await app.elements.get('preview-route').dispatch('click');
+
+  const request=app.requests.find(item=>item.options.method==='POST');
+  assert.equal(request.url,'/dashboard/indoor-map/route');
+  assert.equal(request.options.headers['X-CSRFToken'],'synthetic-csrf-token');
+  assert.deepEqual(JSON.parse(request.options.body),{
+    start_room_id:hall,
+    destination_room_id:kitchen
+  });
+  assert.match(app.elements.get('route-status').textContent,/manual.*not camera-based localization/i);
+  assert.deepEqual(
+    app.elements.get('route-steps').children.map(item=>item.textContent),
+    ['Start (manually selected): Hall','Continue via doorway to Kitchen']
+  );
 });

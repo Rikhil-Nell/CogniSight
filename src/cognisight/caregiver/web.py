@@ -13,6 +13,8 @@ from cognisight.indoor import (
     MapStoreError,
     MapValidationError,
     parse_map_document,
+    plan_route,
+    RoutePlanningError,
 )
 from .projection import collect_snapshot
 from .security import allowed_request, canonical_hosts
@@ -110,6 +112,45 @@ def create_dashboard_blueprint(provider, map_store=None):
             download_name="cognisight-home-map.json",
             max_age=0,
         )
+
+    @blueprint.post("/dashboard/indoor-map/route")
+    def preview_indoor_route():
+        if not session.get("authenticated"):
+            return jsonify({"error": "authentication_required"}), 401
+        if map_store is None:
+            return jsonify({"error": "map_not_configured"}), 503
+        if not request.is_json:
+            return jsonify({"error": "json_required"}), 415
+        try:
+            payload = parse_map_document(request.get_data(cache=False))
+        except MapValidationError:
+            return jsonify({"error": "invalid_route_request"}), 400
+        if (
+            type(payload) is not dict
+            or set(payload) != {"start_room_id", "destination_room_id"}
+            or any(
+                not isinstance(payload.get(key), str) or not payload[key]
+                for key in ("start_room_id", "destination_room_id")
+            )
+        ):
+            return jsonify({"error": "invalid_route_request"}), 400
+        try:
+            document = map_store.load()
+        except MapStoreError:
+            return jsonify({"error": "map_unavailable"}), 503
+        if document is None:
+            return jsonify({"error": "map_not_created"}), 404
+        try:
+            route = plan_route(
+                document,
+                payload["start_room_id"],
+                payload["destination_room_id"],
+            )
+        except RoutePlanningError as error:
+            return jsonify({"error": error.code}), 400
+        except MapValidationError:
+            return jsonify({"error": "map_invalid"}), 503
+        return jsonify(route)
 
     return blueprint
 
