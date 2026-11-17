@@ -48,9 +48,11 @@ PR-only steps above for this release. Never force-push, infer successful remote
 publication from local commits, or treat this as permission for unrelated future
 releases. The normal PR workflow still applies afterward.
 
-Read [NEXT_AGENT_README.md](NEXT_AGENT_README.md), [validation](docs/VALIDATION.md)
-and the [Pi runbook](docs/hardware/PI-RUNBOOK.md) before continuing. Indoor issue
-#5 remains deferred. Software implementation of #6/#7 is present; #8 covers the
+Read [NEXT_AGENT_README.md](NEXT_AGENT_README.md), [validation](docs/VALIDATION.md),
+the [Pi runbook](docs/hardware/PI-RUNBOOK.md), and the
+[indoor map guide](docs/indoor/README.md) before continuing. The approved indoor
+milestone is map authoring and local export only; localization and guidance are
+not implemented. Software implementation of #6/#7 is present; #8 covers the
 available-module integration. Hardware acceptance still requires real devices.
 
 ## Integration Rules

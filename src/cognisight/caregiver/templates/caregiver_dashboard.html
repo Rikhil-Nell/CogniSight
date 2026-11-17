@@ -5,7 +5,7 @@
   <div class="page-title-row"><div><h1>Care overview</h1><p class="page-description">Recent observations from your CogniSight device.</p></div><span class="scope-label">Read only</span></div>
 </div>
 <nav class="section-tabs" aria-label="Dashboard sections">
-  <a class="tab-active" href="#overview">Overview</a><a href="#recognition">People</a><a href="#outdoor">Location</a><a href="#device-health">Device</a>
+  <a class="tab-active" href="#overview">Overview</a><a href="#recognition">People</a><a href="#outdoor">Location</a><a href="#device-health">Device</a><a href="/dashboard/indoor-map">Home map setup</a>
 </nav>
 <div class="connection-strip"><p id="connection" role="status">Connecting to device…</p><span class="refresh-cadence">Updates automatically</span></div>
 <p id="demo" class="demo-notice" hidden><strong>DEMO WORKSPACE</strong> Simulated observations. Not live wearer data.</p>
@@ -26,7 +26,7 @@
   </section>
   <section id="indoor" class="panel indoor-panel" aria-labelledby="indoor-heading">
     <header class="panel-header"><div><h2 id="indoor-heading">Indoor navigation</h2><p>Indoor positioning source</p></div><span id="indoor-status" class="status-pill status-neutral">Not integrated</span></header>
-    <div class="panel-body"><div class="integration-placeholder"><span class="integration-rule" aria-hidden="true"></span><p>No indoor observations yet.</p><span>This module has not been connected.</span></div></div>
+    <div class="panel-body"><div class="integration-placeholder"><span class="integration-rule" aria-hidden="true"></span><p>No live indoor observations yet.</p><span>Map setup does not provide indoor positioning.</span></div><a class="button button-quiet map-link" href="/dashboard/indoor-map">Configure home map</a></div>
     <footer class="panel-footer"><p class="observation-age">Indoor positioning is separate from GPS.</p></footer>
   </section>
 </div>

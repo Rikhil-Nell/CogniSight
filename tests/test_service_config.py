@@ -324,7 +324,7 @@ class HttpServerBoundaryTests(unittest.TestCase):
 
 class StartupTests(unittest.TestCase):
     def fixture(self, state, fail_dashboard=False):
-        events, servers, runtimes, navigation = [], [], [], []
+        events, servers, runtimes, navigation, dashboard_apps = [], [], [], [], []
 
         class Store:
             def __init__(self, path):
@@ -379,6 +379,10 @@ class StartupTests(unittest.TestCase):
                 server.close()
             store.close()
 
+        def create_dashboard(*args, **kwargs):
+            dashboard_apps.append((args, kwargs))
+            return object()
+
         # Import dependency modules before snapshotting sys.modules so each
         # patch targets the same module object imported by the lazy CLI path.
         for module in ("store", "runtime", "vision", "audio", "web"):
@@ -389,9 +393,12 @@ class StartupTests(unittest.TestCase):
             patch.dict(
                 sys.modules,
                 {
+                    "fcntl": SimpleNamespace(
+                        LOCK_EX=1, LOCK_NB=2, flock=lambda *args: None
+                    ),
                     "waitress": SimpleNamespace(create_server=factory),
                     "cognisight.caregiver": SimpleNamespace(
-                        create_dashboard_app=lambda *args: object()
+                        create_dashboard_app=create_dashboard
                     ),
                 },
             )
@@ -416,13 +423,15 @@ class StartupTests(unittest.TestCase):
         stack.enter_context(redirect_stdout(io.StringIO()))
         self.addCleanup(stack.close)
         args = SimpleNamespace(state_dir=state, port=8765)
-        return args, events, servers, navigation
+        return args, events, servers, navigation, dashboard_apps
 
     def test_second_bind_failure_cleans_up_without_starting_workers(self):
         with tempfile.TemporaryDirectory() as directory:
             state = Path(directory)
             (state / "password.hash").write_text("test-hash")
-            args, events, servers, navigation = self.fixture(state, fail_dashboard=True)
+            args, events, servers, navigation, dashboard_apps = self.fixture(
+                state, fail_dashboard=True
+            )
             config = validate_config(
                 {
                     **base_config(),
@@ -447,7 +456,7 @@ class StartupTests(unittest.TestCase):
             ):
                 state = Path(directory)
                 (state / "password.hash").write_text("test-hash")
-                args, events, servers, navigation = self.fixture(state)
+                args, events, servers, navigation, dashboard_apps = self.fixture(state)
                 config = validate_config(
                     {
                         **base_config(),
@@ -461,6 +470,12 @@ class StartupTests(unittest.TestCase):
                 self.assertEqual(_run_service_command(args, config), 0)
                 self.assertEqual(len(servers), 2 if enabled else 1)
                 self.assertEqual(len(navigation), 1 if enabled else 0)
+                self.assertEqual(len(dashboard_apps), 1 if enabled else 0)
+                if enabled:
+                    self.assertEqual(
+                        dashboard_apps[0][1]["map_store"].path,
+                        state / "indoor-map.json",
+                    )
                 self.assertLess(
                     max(
                         i for i, event in enumerate(events) if event == "server.create"

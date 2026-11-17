@@ -22,14 +22,16 @@
   <div class="app-shell">
     {% if session.get('authenticated') %}
     <aside class="sidebar" aria-label="Workspace navigation">
-      <div class="workspace-name"><span class="workspace-monogram" aria-hidden="true">CW</span><div><strong>Care workspace</strong><span>Read-only monitoring</span></div></div>
+      {% set map_page = request.endpoint == 'caregiver.indoor_map' %}
+      <div class="workspace-name"><span class="workspace-monogram" aria-hidden="true">CW</span><div><strong>Care workspace</strong><span>Monitoring &amp; map setup</span></div></div>
       <p class="nav-label">WORKSPACE</p>
       <nav class="sidebar-nav">
-        <a class="nav-active" href="/dashboard" aria-current="page"><span class="nav-indicator" aria-hidden="true"></span>Overview</a>
-        <a href="#recognition">Recognized people</a>
-        <a href="#outdoor">Outdoor location</a>
-        <a href="#indoor">Indoor navigation</a>
-        <a href="#device-health">Device health</a>
+        <a class="{% if not map_page %}nav-active{% endif %}" href="/dashboard"{% if not map_page %} aria-current="page"{% endif %}><span class="nav-indicator" aria-hidden="true"></span>Overview</a>
+        <a href="/dashboard#recognition">Recognized people</a>
+        <a href="/dashboard#outdoor">Outdoor location</a>
+        <a href="/dashboard#indoor">Indoor navigation</a>
+        <a class="{% if map_page %}nav-active{% endif %}" href="/dashboard/indoor-map"{% if map_page %} aria-current="page"{% endif %}>Home map setup</a>
+        <a href="/dashboard#device-health">Device health</a>
       </nav>
       <div class="sidebar-footnote"><span class="scope-label">Caregiver view</span><p>Enrollment and device setup stay on the Pi.</p></div>
     </aside>

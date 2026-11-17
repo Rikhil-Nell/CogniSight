@@ -228,9 +228,13 @@ def _run_service_command(args, config):
             caregiver = config["caregiver"]
             if caregiver["enabled"]:
                 from cognisight.caregiver import create_dashboard_app
+                from cognisight.indoor import IndoorMapStore
 
                 dashboard = create_dashboard_app(
-                    runtime.dashboard_snapshot, state, caregiver["allowed_hosts"]
+                    runtime.dashboard_snapshot,
+                    state,
+                    caregiver["allowed_hosts"],
+                    map_store=IndoorMapStore(state / "indoor-map.json"),
                 )
                 servers.append(
                     create_http_server(

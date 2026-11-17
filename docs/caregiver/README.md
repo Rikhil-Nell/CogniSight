@@ -1,8 +1,10 @@
 # Caregiver dashboard — issue #4
 
-The caregiver dashboard is a separate, read-only HTTPS application for a phone
-on the same Wi-Fi as the Pi. It shows recognition/context, outdoor GPS fix/status,
-indoor integration status, and module health. It does not provide remote enrollment,
+The caregiver dashboard is a separate HTTPS application for a phone on the same
+Wi-Fi as the Pi. Its observation cards are read-only and show recognition/context,
+outdoor GPS fix/status, indoor integration status, and module health. A separate
+authenticated page lets a caregiver configure and export the indoor room map;
+this is not live localization. The dashboard does not provide remote enrollment,
 walking routes, an emergency service, or proof that the wearer is safe.
 
 Implementation exists; **Pi, GNSS receiver, phone browser, certificates, native
@@ -82,6 +84,16 @@ must not add a second proxy without reviewing that trust configuration.
 [Caddy reverse proxy](https://caddyserver.com/docs/caddyfile/directives/reverse_proxy),
 [Werkzeug proxy trust](https://werkzeug.palletsprojects.com/en/stable/middleware/proxy_fix/).
 
+## Indoor map editor
+
+Open `https://<configured-host>/dashboard/indoor-map` after signing in. The editor
+stores one map in the Pi's private state directory and offers a JSON download.
+Map edits use the same authenticated session, HTTPS origin checks, and CSRF
+protection as the dashboard; export is also private to the caregiver session.
+The map is a room graph, not a scale drawing or current location. See the
+[indoor map schema and API](../indoor/README.md) for validation, file format,
+API routes, and implementation limits.
+
 ## What the statuses mean
 
 The page polls every half second while connected (five-second retries after failure). Source age advances independently between
@@ -97,7 +109,8 @@ profiles. No confidence-percentage or clinical inference is shown. Outdoor
 coordinates require a finite valid current fix. No fix, disconnected, invalid,
 and stale states are distinct; any preserved **Last known location** is explicitly
 historical. GNSS time can be unavailable. Indoor status says **not integrated**
-until an actual module is connected; GPS is not used as a substitute indoor fix.
+until an actual localization module is connected; saved map configuration is
+not an indoor observation, and GPS is not used as a substitute indoor fix.
 No map provider, CDN, analytics, camera stream, raw biometric vector, microphone
 recording or browser geolocation is used.
 
@@ -108,6 +121,7 @@ banner and mock labels. Live-data failures never automatically switch to mock da
 
 ```sh
 PYTHONPATH=src python3 -m unittest discover -s tests -p 'test_caregiver*.py' -v
+PYTHONPATH=src python3 -m unittest discover -s tests -p 'test_indoor_map*.py' -v
 ```
 
 Run the complete suite with Flask/Flask-WTF/Waitress installed; software web

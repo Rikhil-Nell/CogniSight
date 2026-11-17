@@ -6,7 +6,7 @@ CogniSight is an assistive technology project intended to support people living 
 
 ## Project Status
 
-**Phase:** Software validation complete for available modules; target-hardware qualification pending.
+**Phase:** Available-module software and indoor map authoring implemented; target-hardware qualification pending.
 
 Fresh recognition, GNSS positioning, and caregiver-monitoring implementations are present. System contracts, Pi diagnostics, and available-module software integration are implemented. Target Raspberry Pi, receiver, headset, and phone qualification remains pending; software tests do not establish hardware compatibility.
 
@@ -19,12 +19,12 @@ Recognises registered people and uses stored relationship and contextual informa
 Acquires verified location/status from local GPSD, distinguishing current fixes from historical locations. Walking-route directions are outside this version.
 
 ### 3. Indoor Navigation
-Deferred by the user (issue #5); no indoor producer or guidance is implemented.
+The caregiver dashboard can create, edit, save, and export a versioned home room map with doorway/corridor connections and landmark metadata. Camera landmark detection, indoor localization, route calculation, and spoken indoor directions are not implemented; live indoor status remains unavailable.
 
 ### 4. Caregiver Support
-Authenticated read-only dashboard for a caregiver phone on the same Wi-Fi, with HTTPS, module status, and stale/unavailable-data handling. Enrollment remains local to the Pi.
+Authenticated dashboard for a caregiver phone on the same Wi-Fi, with HTTPS, read-only module monitoring, indoor map configuration, and stale/unavailable-data handling. Enrollment remains local to the Pi.
 
-*Available-module software is implemented. Indoor remains deferred, and physical compatibility/accuracy must still be measured.*
+*Physical compatibility and accuracy must still be measured. Map authoring does not implement indoor localization or navigation.*
 
 ## Development Workflow
 
@@ -43,6 +43,8 @@ Download the [printable next-steps PDF](output/pdf/CogniSight-next-steps.pdf). I
 For the physical-device contributor, start with the [simple SSH runbook](docs/hardware/PI-RUNBOOK.md) and [hardware checklist](docs/hardware/README.md). See the [architecture and editable draw.io diagram](docs/architecture.md) and [module contracts](docs/system/CONTRACTS.md).
 
 Then read [recognition and service setup](docs/recognition/README.md), then [GNSS configuration](docs/navigation/README.md) and [same-Wi-Fi phone access](docs/caregiver/README.md). See [software validation and remaining release gates](docs/VALIDATION.md).
+
+For the indoor map authoring milestone, see [schema, dashboard API, and limitations](docs/indoor/README.md).
 
 ## Team
 

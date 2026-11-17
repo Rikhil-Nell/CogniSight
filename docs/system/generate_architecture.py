@@ -28,7 +28,7 @@ H.text('<b>CogniSight · local system architecture</b>', 30, 20, 1400, 40,
 H.text('Raspberry Pi 5 / 8 GB · one wearer · same-Wi-Fi caregiver · hardware acceptance pending',
        30, 65, 1450, 25, fs=15, align="left", fc="#596579")
 H.box('pi', '<b>Raspberry Pi · one service process / ordinary user</b>',
-      340, 115, 900, 750, fill="#F2F6FC", stroke="#6B89B4", fs=17, sl=18)
+      340, 115, 900, 790, fill="#F2F6FC", stroke="#6B89B4", fs=17, sl=18)
 H.text('SENSORS / WEARER', 30, 122, 270, 25, fs=14, align="left", fc="#596579")
 H.text('LOCAL ACCESS', 1290, 122, 280, 25, fs=14, align="left", fc="#596579")
 
@@ -42,9 +42,10 @@ tile('aux', 'Owned AUX headset / earphones', 'USB sound adapter required †<br>
 tile('audio', 'One AudioEngine', 'Vosk → commands / Piper → speech<br>Explicit USB routes · no speaker fallback', 375, 505, 335, 130, 'pi')
 tile('snapshot', 'Snapshot → allowlisted projection', 'Original evidence age / independent GPS<br>No native or database work in HTTP', 785, 505, 420, 130, 'pi')
 tile('private', 'Private SQLite / profiles / models', 'State outside Git · no raw camera storage<br>Enrollment owns profile changes', 375, 710, 335, 105, 'pi')
-tile('dashboard', 'Read-only caregiver backend', 'Waitress · 127.0.0.1:8766<br>Schema 1 · indoor unavailable', 785, 710, 420, 105, 'pi')
-tile('enrollment', 'Laptop → local enrollment', 'SSH tunnel → Pi 127.0.0.1:8765<br>No LAN proxy / caregiver controls', 1290, 175, 280, 100)
-tile('phone', 'Caregiver phone', 'Same private Wi-Fi · login / 15 min session<br>HTTPS public root CA trust required', 1290, 505, 280, 130)
+tile('dashboard', 'Caregiver backend + map editor', 'Waitress · 127.0.0.1:8766<br>Snapshot schema 1 · indoor not integrated', 785, 710, 420, 95, 'pi')
+tile('mapfile', 'Private indoor-map JSON', 'Schema v1 · authenticated editor only<br>Configuration, not a location source', 785, 820, 420, 70, 'pi')
+tile('enrollment', 'Laptop → local enrollment', 'SSH tunnel → Pi 127.0.0.1:8765<br>No enrollment proxy / recognition controls', 1290, 175, 280, 100)
+tile('phone', 'Caregiver phone', 'Same Wi-Fi · monitor / configure map<br>HTTPS public root CA trust required', 1290, 505, 280, 130)
 tile('caddy', 'Caddy · LAN HTTPS :443', 'Proxies dashboard only<br>No enrollment or GPSD exposure', 1290, 710, 280, 105)
 
 # Explicit lanes avoid labels and unrelated components. Solid = data, dashed = control.
@@ -57,6 +58,7 @@ H.edge('navigation','snapshot'); H.bn(3,995,471)
 H.edge('snapshot','dashboard')
 H.edge('phone','caddy',dbl=True)
 H.edge('caddy','dashboard',dbl=True); H.bn(4,1247,762)
+H.edge('dashboard','mapfile',dbl=True)
 H.fl(300,545,375,545); H.bn(5,337,545)
 H.fl(375,595,300,595)
 H.edge('audio','runtime','purple',via=[(744,570),(744,290),(995,290)])
@@ -75,7 +77,8 @@ panel('flows','Numbered paths',[
  '5  Headset mic † → USB adapter † → Vosk commands.',
  '6  Valid speech → one queue / Piper → AUX via USB †.',
  '7  Local enrollment ↔ profiles / SQLite → recognition.',
-],30,905,750,260)
+ '8  Phone HTTPS → authenticated map editor ↔ private map file.',
+],30,925,750,290)
 panel('contracts','Contracts / limits',[
  'Schema 1 · no images, embeddings or raw audio in API.',
  'Freshness: recognition <1s; GPS <10s by default (configurable).',
@@ -84,14 +87,15 @@ panel('contracts','Contracts / limits',[
  'Queues: frame 1; speech 8; subscribers 8 × 64 (lossy events).',
  'Speech: explicit 1 / automatic 0; stop cancels generation.',
  'Requested 640×480 / 15 fps is not measured throughput.',
-],805,905,765,260)
+ 'Map: room graph + landmark metadata; no localization or routes.',
+],805,925,765,290)
 panel('limits','Qualification / notation',[
  '† Hardware path / identity is unverified; physical contributor must confirm it.',
  'Solid black = data; dashed purple = control; dashed grey = disabled/unverified input.',
  'Neutral shapes = local / non-AWS components. No cloud service is part of this design.',
- 'Indoor #5 deferred (Jahnvi / Archisha); no route guidance or emergency guarantee.',
+ 'Indoor map authoring only (Jahnvi / Archisha); no localization or route guidance.',
  '#7 actual Pi/camera/audio and #8 phone/TLS/load acceptance remain pending.',
-],30,1185,1540,200)
+],30,1235,1540,175)
 assert all(a in H.ids and b in H.ids for a,b in H.edges_chk)
 model = ('<mxGraphModel adaptiveColors="auto" grid="1" gridSize="10" page="1" '
          'pageWidth="1600" pageHeight="1420" background="#FFFFFF">'
@@ -99,5 +103,5 @@ model = ('<mxGraphModel adaptiveColors="auto" grid="1" gridSize="10" page="1" '
          '</root></mxGraphModel>')
 xml = '<mxfile host="app.diagrams.net"><diagram id="cognisight" name="Local system">'+model+'</diagram></mxfile>'
 ET.fromstring(xml)
-(OUT/'cognisight-architecture.drawio').write_text(xml+'\n')
+(OUT/'cognisight-architecture.drawio').write_text(xml+'\n', encoding='utf-8')
 print(f'Generated {len(H.cells)} cells; {len(H.edges_chk)} validated edges')
