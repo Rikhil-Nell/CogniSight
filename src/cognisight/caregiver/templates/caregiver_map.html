@@ -8,7 +8,7 @@
 <nav class="section-tabs" aria-label="Workspace sections">
   <a href="/dashboard">Overview</a><a class="tab-active" href="/dashboard/indoor-map" aria-current="page">Home map setup</a>
 </nav>
-<p class="map-boundary-note">This map is a room graph, not a floorplan. It does not show the wearer's current location or provide routes or directions.</p>
+<p class="map-boundary-note">This map is a room graph, not a floorplan. Route previews use a manually selected starting room as demo input; they do not locate the wearer or provide camera-based directions.</p>
 <input id="map-csrf-token" type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 <section id="map-editor" class="map-editor" aria-busy="true">
   <section class="panel map-panel" aria-labelledby="map-details-heading">
@@ -29,6 +29,23 @@
   <section class="panel map-panel" aria-labelledby="landmarks-heading">
     <header class="panel-header"><div><h2 id="landmarks-heading">Landmarks</h2><p>IDs and labels are metadata only; camera detection is not included.</p></div><button id="add-landmark" class="button button-quiet" type="button" disabled>Add landmark</button></header>
     <div id="landmarks-list" class="map-list panel-body"></div>
+  </section>
+  <section class="panel map-panel" aria-labelledby="route-heading">
+    <header class="panel-header"><div><h2 id="route-heading">Preview a route</h2><p>Choose rooms in the saved map to see the shortest room sequence.</p></div><span class="scope-label">Demo input</span></header>
+    <div class="panel-body route-preview">
+      <p class="route-demo-note">Starting location is manually selected for this preview. It is not detected by the camera.</p>
+      <div class="route-fields">
+        <label class="map-field" for="route-start">Starting room (manual/demo input)
+          <select id="route-start" class="map-input route-control" disabled><option value="">Select a starting room</option></select>
+        </label>
+        <label class="map-field" for="route-destination">Destination room
+          <select id="route-destination" class="map-input route-control" disabled><option value="">Select a destination</option></select>
+        </label>
+      </div>
+      <button id="preview-route" class="button button-primary" type="button" disabled>Preview route</button>
+      <p id="route-status" class="route-status" role="status" aria-live="polite">Save a map with rooms before previewing a route.</p>
+      <ol id="route-steps" class="route-steps"></ol>
+    </div>
   </section>
   <div class="map-actions">
     <p id="map-status" role="status" aria-live="polite">Loading saved map…</p>

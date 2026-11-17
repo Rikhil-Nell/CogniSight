@@ -10,6 +10,8 @@ from cognisight.indoor import (
     IndoorMapStore,
     MapStoreError,
     MapValidationError,
+    RoutePlanningError,
+    plan_route,
     validate_map_document,
 )
 
@@ -131,6 +133,111 @@ class IndoorMapValidationTests(unittest.TestCase):
             path.write_text(json.dumps({**valid_map(), "schema_version": 2}), encoding="utf-8")
             with self.assertRaises(MapStoreError):
                 IndoorMapStore(path).load()
+
+
+class IndoorRoutePlanningTests(unittest.TestCase):
+    def test_bfs_returns_shortest_ordered_room_and_connection_sequence(self):
+        document = valid_map()
+        hall, kitchen = (room["id"] for room in document["rooms"])
+        bedroom, washroom = new_id(), new_id()
+        document["rooms"].extend(
+            [
+                {"id": bedroom, "name": "Bedroom"},
+                {"id": washroom, "name": "Washroom"},
+            ]
+        )
+        document["connections"].extend(
+            [
+                {
+                    "id": new_id(),
+                    "from_room_id": kitchen,
+                    "to_room_id": bedroom,
+                    "kind": "doorway",
+                },
+                {
+                    "id": new_id(),
+                    "from_room_id": hall,
+                    "to_room_id": bedroom,
+                    "kind": "corridor",
+                },
+                {
+                    "id": new_id(),
+                    "from_room_id": bedroom,
+                    "to_room_id": washroom,
+                    "kind": "doorway",
+                },
+            ]
+        )
+
+        route = plan_route(document, hall, washroom)
+
+        self.assertEqual(route["status"], "found")
+        self.assertEqual(route["start_source"], "manual_demo_selection")
+        self.assertEqual(
+            route["rooms"],
+            [
+                {"id": hall, "name": "Hall"},
+                {"id": bedroom, "name": "Bedroom"},
+                {"id": washroom, "name": "Washroom"},
+            ],
+        )
+        self.assertEqual(len(route["connections"]), 2)
+        self.assertEqual(route["connections"][0]["kind"], "corridor")
+        self.assertEqual(route["connections"][0]["from_room_id"], hall)
+
+    def test_same_room_is_a_one_room_route(self):
+        document = valid_map()
+        room = document["rooms"][0]
+
+        route = plan_route(document, room["id"], room["id"])
+
+        self.assertEqual(route["status"], "found")
+        self.assertEqual(route["rooms"], [{"id": room["id"], "name": "Hall"}])
+        self.assertEqual(route["connections"], [])
+
+    def test_disconnected_and_missing_connections_are_unreachable(self):
+        document = valid_map()
+        document["connections"] = []
+
+        route = plan_route(
+            document, document["rooms"][0]["id"], document["rooms"][1]["id"]
+        )
+
+        self.assertEqual(route["status"], "unreachable")
+        self.assertEqual(route["rooms"], [])
+        self.assertEqual(route["connections"], [])
+
+    def test_unknown_rooms_empty_maps_and_invalid_connections_are_rejected(self):
+        document = valid_map()
+        with self.assertRaisesRegex(RoutePlanningError, "unknown_start_room"):
+            plan_route(document, new_id(), document["rooms"][0]["id"])
+        with self.assertRaisesRegex(RoutePlanningError, "unknown_destination_room"):
+            plan_route(document, document["rooms"][0]["id"], new_id())
+
+        empty = {
+            "schema_version": 1,
+            "map_id": new_id(),
+            "name": "Empty home",
+            "rooms": [],
+            "connections": [],
+            "landmarks": [],
+        }
+        with self.assertRaisesRegex(RoutePlanningError, "unknown_start_room"):
+            plan_route(empty, new_id(), new_id())
+
+        missing_connections = valid_map()
+        del missing_connections["connections"]
+        with self.assertRaises(MapValidationError):
+            plan_route(
+                missing_connections,
+                missing_connections["rooms"][0]["id"],
+                missing_connections["rooms"][1]["id"],
+            )
+
+        document = valid_map()
+        document["connections"][0]["to_room_id"] = new_id()
+        with self.assertRaises(MapValidationError):
+            plan_route(document, document["rooms"][0]["id"], document["rooms"][1]["id"])
 
 
 if __name__ == "__main__":

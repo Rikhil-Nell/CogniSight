@@ -52,6 +52,7 @@ jobs:
               'cognisight/caregiver/static/dashboard.js',
               'cognisight/caregiver/static/indoor_map.js',
               'cognisight/indoor/map_store.py',
+              'cognisight/indoor/route_planner.py',
               'cognisight/recognition/templates/enroll.html',
           }
           assert required <= files, 'Built wheel is missing required UI assets'

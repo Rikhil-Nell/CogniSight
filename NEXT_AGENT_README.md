@@ -4,7 +4,7 @@
 
 ## What the user wants next
 
-1. **Indoor map authoring is the approved first milestone.** Maintain the caregiver-authored versioned room graph, persistence, and export boundary; do not claim camera localization, route calculation, or spoken indoor directions.
+1. **Indoor map authoring and manual-start route preview are implemented.** Maintain the caregiver-authored versioned room graph, local persistence, export, and BFS route-preview boundary. A route starts from a caretaker-selected demo room; do not claim camera localization, directional guidance, or spoken indoor directions.
 2. **Nonphysical software is implemented and reviewed, including #8 integration tests.** Start with actual device qualification; do not re-plan finished modules.
 3. **#6/#7 software implementation is approved and present.** Do not ask for the same approval again. Physical-device checks remain pending; collect actual evidence before declaring acceptance.
 4. Continue device qualification in small, tested steps using the authorized Git identity.
@@ -20,7 +20,7 @@ The contributor receiving this code has access to the physical devices. Use that
 | #2 — recognition/context | Fresh implementation: Picamera2, YuNet/SFace, verified profiles, encounter history, offline voice, local enrollment | Actual camera/headset execution, calibration, accuracy and performance on the Pi |
 | #3 — outdoor positioning | Fresh local GPSD client; validates fixes and keeps live/last-known states separate | Confirm the actual board supports GNSS, its interface, setup and a real fix |
 | #4 — caregiver interface | Read-only HTTPS monitoring plus authenticated indoor map editor; real Flask auth/CSRF/session and Waitress tests pass | Actual Pi/phone TLS, LAN access and combined load |
-| Indoor map authoring | Caregiver room graph, connections, landmark metadata, validation, private persistence, and export | Camera detection, localization, route calculation, and spoken guidance are not implemented |
+| Indoor navigation | Caregiver room graph, connections, landmark metadata, validation, private persistence/export, and shortest-path preview from a manually selected start | Camera detection/localization, physical-position guidance, directional instructions, and spoken guidance are not implemented |
 | #6 — system interfaces | Software implemented: stable isolated events, capture-age freshness, cached HTTP projection, cleanup fixes, contracts and rendered editable diagram | Device shutdown/load evidence and separate team-owner review |
 | #7 — Pi and camera | Software implemented: isolated native doctor, truthful measured smoke, final SSH runbook | Real Pi OS/native/camera/preview and adapter qualification |
 | #8 — end-to-end integration | Eight real-component software integration checks pass through Store/Runtime/GPSD parsing/authenticated Flask consumer | Physical combined-device acceptance; no claim of actual TLS or hardware |

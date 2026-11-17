@@ -143,14 +143,17 @@ Indoor only emits common fields. Its `status`, `reason` and `data_source` are
 always overwritten to unavailable / not_integrated / unavailable by caregiver
 projection. No destination, marker, route or guidance is inferred.
 
-The indoor map editor is a separate configuration API, not an addition to the
-runtime snapshot. Schema v1 stores one room graph, bidirectional doorway or
-corridor connections, and unique landmark metadata. The authenticated dashboard
-validates and saves it outside the repository in a private JSON file. The
-schema, API routes, and validation rules are documented in
-[Indoor home-map configuration](../indoor/README.md). The map does not provide
-camera detection, localization, route calculation, or spoken directions, and
-does not change indoor snapshot status.
+The indoor map editor and route-preview API are separate from the runtime
+snapshot. Schema v1 stores one room graph,
+bidirectional doorway or corridor connections, and unique landmark metadata.
+The authenticated dashboard validates and saves it outside the repository in a
+private JSON file. A dependency-free BFS endpoint previews the shortest
+unweighted room sequence between a manually selected demo start and destination.
+It does not establish the wearer's location, and does not change indoor snapshot
+status. The schema, API routes, and validation rules are documented in
+[Indoor home-map configuration](../indoor/README.md). Camera detection,
+localization, orientation-aware guidance, and spoken directions are not
+implemented.
 
 `health` is a dictionary of bounded machine codes, limited to `camera`,
 `microphone`, `playback`, `model`, `storage`, `clock`, `runtime`, `gpsd`,

@@ -1,6 +1,6 @@
 # CogniSight system architecture
 
-This is the implemented local-Pi design for issues #2, #3, #4, #6, and the first indoor-map-authoring milestone. It does not establish successful physical qualification or separate approval by every module owner. Indoor localization, routes, and spoken directions remain unimplemented.
+This is the implemented local-Pi design for issues #2, #3, #4, #6, and indoor map authoring with manual-start route preview. It does not establish successful physical qualification or separate approval by every module owner. Camera-based indoor localization, directional guidance, and spoken directions remain unimplemented.
 
 Open the [editable draw.io file](system/cognisight-architecture.drawio) in diagrams.net to change the diagram. The [generator](system/generate_architecture.py) uses [helpers](system/diagram_helpers.py) adapted from the user's architecture-diagram skill. Regenerate from the repository root:
 
@@ -23,7 +23,7 @@ The generator validates XML and edge endpoints. The editable source now includes
 | 7 | Local enrollment is available through a loopback-only SSH tunnel. Verified profiles and private SQLite state supply recognition/context. |
 | 8 | The authenticated caregiver editor stores a versioned indoor room graph and landmark metadata in a private local JSON file; it does not produce location observations. |
 
-Read [module contracts](system/CONTRACTS.md) for actual schema-1 fields, time/error semantics, queue bounds, ownership and extension rules. See the [indoor map schema and API](indoor/README.md). There is no second camera consumer, indoor localization producer, route planner, message broker, cloud inference, walking-route service or emergency guarantee.
+Read [module contracts](system/CONTRACTS.md) for actual schema-1 fields, time/error semantics, queue bounds, ownership and extension rules. See the [indoor map schema and API](indoor/README.md). There is no second camera consumer, indoor localization producer, orientation-aware guidance, message broker, cloud inference, walking-route service or emergency guarantee.
 
 ## HTTP and shutdown limits
 

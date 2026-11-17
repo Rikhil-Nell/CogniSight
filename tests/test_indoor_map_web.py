@@ -91,6 +91,24 @@ class IndoorMapWebTests(unittest.TestCase):
             json=document,
         )
 
+    def post_route(self, start_room_id, destination_room_id, token=None):
+        headers = {
+            "Origin": "https://cognisight.local",
+            "Referer": "https://cognisight.local/dashboard/indoor-map",
+        }
+        if token is not None:
+            headers["X-CSRFToken"] = token
+        return self.client.post(
+            "/dashboard/indoor-map/route",
+            base_url="https://cognisight.local",
+            environ_overrides={"REMOTE_ADDR": "127.0.0.1"},
+            headers=headers,
+            json={
+                "start_room_id": start_room_id,
+                "destination_room_id": destination_room_id,
+            },
+        )
+
     def test_editor_and_data_are_authenticated_and_csrf_protected(self):
         self.assertEqual(self.get("/dashboard/indoor-map").status_code, 302)
         self.assertEqual(self.get("/dashboard/indoor-map/data").status_code, 401)
@@ -98,7 +116,9 @@ class IndoorMapWebTests(unittest.TestCase):
         self.authenticate()
         page = self.get("/dashboard/indoor-map")
         self.assertEqual(page.status_code, 200)
-        self.assertIn("does not show the wearer", page.get_data(as_text=True))
+        page_text = page.get_data(as_text=True)
+        self.assertIn("manually selected starting room", page_text)
+        self.assertIn("not detected by the camera", page_text)
         self.assertEqual(self.put_map(sample_map()).status_code, 400)
 
     def test_save_reload_export_and_indoor_status_remains_unavailable(self):
@@ -155,6 +175,60 @@ class IndoorMapWebTests(unittest.TestCase):
         self.assertEqual(self.get("/dashboard/indoor-map/export").status_code, 404)
         (self.state / "indoor-map.json").write_text("{not-json", encoding="utf-8")
         self.assertEqual(self.get("/dashboard/indoor-map/data").status_code, 503)
+
+    def test_route_preview_requires_auth_csrf_and_uses_the_saved_map(self):
+        document = sample_map()
+        start, destination = (room["id"] for room in document["rooms"])
+        self.authenticate()
+        token = self.csrf_token()
+        with self.client.session_transaction(
+            base_url="https://cognisight.local"
+        ) as session:
+            session.pop("authenticated")
+        self.assertEqual(self.post_route(start, destination, token).status_code, 401)
+
+        self.authenticate()
+        self.assertEqual(self.post_route(start, destination).status_code, 400)
+        self.assertEqual(self.post_route(start, destination, token).status_code, 404)
+
+        self.assertEqual(self.put_map(document, token).status_code, 200)
+        response = self.post_route(start, destination, token)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json["status"], "found")
+        self.assertEqual(response.json["start_source"], "manual_demo_selection")
+        self.assertEqual(
+            response.json["rooms"],
+            [{"id": start, "name": "Hall"}, {"id": destination, "name": "Kitchen"}],
+        )
+        self.assertEqual(response.json["connections"][0]["kind"], "doorway")
+
+        duplicate = self.client.post(
+            "/dashboard/indoor-map/route",
+            base_url="https://cognisight.local",
+            environ_overrides={"REMOTE_ADDR": "127.0.0.1"},
+            headers={
+                "Origin": "https://cognisight.local",
+                "Referer": "https://cognisight.local/dashboard/indoor-map",
+                "X-CSRFToken": token,
+            },
+            data=(
+                '{"start_room_id":"%s","start_room_id":"%s",'
+                '"destination_room_id":"%s"}' % (start, start, destination)
+            ),
+            content_type="application/json",
+        )
+        self.assertEqual(duplicate.status_code, 400)
+        self.assertEqual(self.post_route(start, "unknown-room", token).status_code, 400)
+
+        document["connections"] = []
+        self.assertEqual(self.put_map(document, token).status_code, 200)
+        unreachable = self.post_route(start, destination, token)
+        self.assertEqual(unreachable.status_code, 200)
+        self.assertEqual(unreachable.json["status"], "unreachable")
+        self.assertEqual(unreachable.json["rooms"], [])
+
+        (self.state / "indoor-map.json").write_text("{not-json", encoding="utf-8")
+        self.assertEqual(self.post_route(start, destination, token).status_code, 503)
 
 
 if __name__ == "__main__":

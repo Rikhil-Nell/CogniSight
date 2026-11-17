@@ -9,7 +9,7 @@ Updated 18 November 2026. The user authorized completing remaining nonphysical w
 | #2 | Offline recognition/context/history, verified profiles, single-camera adapter, offline voice, local enrollment, calibration/qualification tools | Camera/model execution, headset adapter/microphone, consented calibration/accuracy and latency |
 | #3 | Independent local GPSD client with validated fixes, source expiry and distinct last-known location | Exact reported board/manual and genuine compatible GNSS output; no routes in this version |
 | #4 | Approved workspace-style caregiver UI, read-only monitoring, authenticated indoor map editor, CSRF/fixed sessions/proxy guards | Actual phone, trusted HTTPS, LAN access and accessibility/load |
-| Indoor map authoring | Versioned caregiver-authored room graph, authenticated save/load/export | Camera detection, indoor localization, route calculation, and spoken directions |
+| Indoor map and route preview | Versioned caregiver-authored room graph, authenticated save/load/export, and shortest unweighted route preview from a manually selected start | Camera detection/localization, directional guidance, and spoken directions |
 | #6 | Stable validated event IDs, isolated subscribers, capture-age freshness, cached HTTP projection, cleanup propagation, contracts and rendered editable diagram | Device shutdown/load evidence; no invented module-owner sign-off |
 | #7 | Isolated native diagnostics, truthful camera/SFace smoke reporting, hardware checklist and complete SSH runbook | Actual Pi OS/native ABI, camera preview/still, sound adapter and package/model evidence |
 | #8 | Eight real-component integration checks from SQLite/gallery/tracker and GPSD parsing through the authenticated Flask consumer | Real hardware/phone/TLS/combined-load acceptance |
@@ -17,15 +17,17 @@ Updated 18 November 2026. The user authorized completing remaining nonphysical w
 ### Indoor map authoring checks
 
 On Windows with Python 3.13, Flask 3.1.3, Flask-WTF 1.3.0, and Waitress 3.0.2
-in a temporary test environment, 44 focused Python checks passed: 11 indoor map
-schema/persistence/dashboard tests, 8 caregiver security tests, 17 service
-configuration/lifecycle tests, and 8 available-module integration tests. Six
-Node checks passed, including map creation, editing, CSRF save, and failed-load
-handling. The service configuration tests used a test-only `fcntl` shim because
-Windows does not provide that POSIX module. `git diff --check`, JavaScript syntax,
-and Python compilation also passed. These focused checks do not replace the
-complete repository suite or hardware acceptance. No hardware, camera, or
-microphone tests were run.
+in a temporary test environment, 49 focused Python checks passed: 16 indoor map
+and route-planning tests, 8 caregiver security tests, 17 service
+configuration/lifecycle tests, and 8 available-module integration tests. Seven
+Node checks passed, including route selection, CSRF submission, and explicitly
+manual/demo start labeling. Route cases cover BFS shortest paths, same-room,
+disconnected and empty maps, invalid connections, authentication/CSRF, and
+corrupt saved maps. The service configuration tests used a test-only `fcntl` shim
+because Windows does not provide that POSIX module. `git diff --check`,
+JavaScript syntax, and Python compilation also passed. These focused checks do
+not replace the complete repository suite or hardware acceptance. No hardware,
+camera, or microphone tests were run.
 
 The editable architecture diagram source was regenerated and validated (71 cells,
 15 edges). The preview PNG has not been refreshed because no local diagrams.net

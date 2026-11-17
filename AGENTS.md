@@ -50,10 +50,11 @@ releases. The normal PR workflow still applies afterward.
 
 Read [NEXT_AGENT_README.md](NEXT_AGENT_README.md), [validation](docs/VALIDATION.md),
 the [Pi runbook](docs/hardware/PI-RUNBOOK.md), and the
-[indoor map guide](docs/indoor/README.md) before continuing. The approved indoor
-milestone is map authoring and local export only; localization and guidance are
-not implemented. Software implementation of #6/#7 is present; #8 covers the
-available-module integration. Hardware acceptance still requires real devices.
+[indoor map guide](docs/indoor/README.md) before continuing. Indoor map authoring
+and shortest-path preview from a manually selected demo start are implemented;
+camera localization and directional/spoken guidance are not. Software
+implementation of #6/#7 is present; #8 covers the available-module integration.
+Hardware acceptance still requires real devices.
 
 ## Integration Rules
 
