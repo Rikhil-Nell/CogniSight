@@ -30,14 +30,16 @@ def introduction(name, relationship=""):
 
 
 _COMMANDS = [
-    ("stop", re.compile(r"\b(stop|quiet|shush|enough|silence)\b")),
+    ("stop", re.compile(r"\b(stop|quiet|shush|enough|silence|cancel)\b")),
+    ("go", re.compile(r"\b(take me to|where('s| is| are)|how do i get to|go to|want to go|need to go|need the|find the|show me the|way to)\b")),
     ("more", re.compile(r"\b(tell me more|more about|who is (he|she|they) again)\b")),
     ("who", re.compile(r"\b(who('s| is) (this|that|it|here)|who am i (talking|speaking) to|say (that|it) again|repeat)\b")),
 ]
 
 
 def parse_command(text):
-    """'stop', 'who', 'more', or None for anything else."""
+    """'stop', 'go', 'who', 'more', or None for anything else. 'go' means the
+    wearer asked for a room; the caller works out which one."""
     lowered = " ".join((text or "").lower().replace("’", "'").split())
     for command, pattern in _COMMANDS:
         if pattern.search(lowered):
@@ -171,7 +173,7 @@ class MoonshineSpeaker:
         self._tts = tts.load()
 
     def say(self, text):
-        self._tts.stop()
+        # Queued, so a direction never cuts off an introduction.
         self._tts.say(text)
 
     def stop(self):

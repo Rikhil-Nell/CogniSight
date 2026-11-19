@@ -118,10 +118,12 @@ def _start(args, gallery):
     from cognisight.location import Locator
     from cognisight.runtime import Runtime
     from cognisight.server import create_app, serve
+    from cognisight.signs import SignStore
 
     args.gallery.mkdir(parents=True, exist_ok=True)
     runtime = Runtime(
         gallery,
+        signs=SignStore(args.gallery.parent / "signs.json"),
         camera_factory=partial(open_camera, args.camera, args.flip, args.swap_colors),
         interval=args.interval,
         port=args.port,

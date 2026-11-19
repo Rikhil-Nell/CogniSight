@@ -54,7 +54,21 @@ recognise and see what the device is doing.
    - **Place**: an approximate location of the device (see below).
    - **Device**: camera, recognition, speech, and listening status, plus the
      address a phone can open.
-5. **Approximate location.** The Pi lists nearby Wi-Fi access points and asks
+5. **Talking signposts (indoor guidance).** Printed signs (camera-readable
+   ArUco markers with the room name in large type) go beside doors. When the
+   camera reads one, the wearer hears "This is the kitchen", optionally with a
+   caregiver note such as "Your tea things are in the cupboard by the window."
+   To guide the wearer to a room, the caregiver presses "Guide them to…" on the
+   dashboard, or the wearer says "take me to the bathroom". The device plans a
+   route through the signs and speaks one step at each sign ("The bathroom is
+   the second door on your right.") until "You're at the bathroom." If they
+   take a wrong turn, the next sign they see re-plans the route. The caregiver
+   sees which room the wearer is in, without watching a camera feed.
+6. **Home floor plan.** A small editor on the dashboard to draw walls, doors,
+   and room names, and to place signs. Each placed sign shows the area from
+   which the camera can read it, so the caregiver can plan where signs should
+   go. Connections between signs are drawn on the plan as the route map.
+7. **Approximate location.** The Pi lists nearby Wi-Fi access points and asks
    Google's Geolocation API where it is. The dashboard says honestly how the
    position was found: from Wi-Fi (typically tens of metres) or only from the
    internet connection (typically kilometres). It never presents a rough area
@@ -78,12 +92,16 @@ navigation, indoor navigation, and a caregiver dashboard.
   only when at least two access points are visible. With fewer, it falls back
   to the internet address. In the hostel, only one access point was visible, so
   the result was the Vijayawada area, about 2.7 km wide.
-- **Indoor navigation was dropped.** The earlier version let a caregiver type
-  a map of rooms and preview a route. Nothing sensed where the wearer actually
-  was: no beacons, no depth camera, no floor plan. For a person with dementia,
-  the more relevant confusion is forgetting what a room is for, not finding a
-  door. Recognising rooms with the camera ("this is the kitchen") was discussed
-  as future work.
+- **Indoor navigation was redesigned around signs.** The earlier version let a
+  caregiver type a map of rooms and preview a route, but nothing sensed where
+  the wearer actually was, and the Pi has no compass or gyroscope to know which
+  way they face. The redesign uses the camera the device already has: when it
+  reads a printed sign, the wearer is facing that sign, so a direction written
+  "for someone standing in front of this sign" is always the right way round.
+  Directions are given one sign at a time, like airport signage, instead of
+  continuous turn-by-turn guidance that would need positioning hardware. It
+  also covers the confusion that matters most in dementia: forgetting what a
+  room is for, not only finding the door.
 - **The face pipeline was replaced.** The first version used YuNet to find
   faces and SFace to compare them. It was never shown working on the Pi. It was
   replaced with DeepFace using the Facenet512 model, a stack a team member had
@@ -106,7 +124,8 @@ Pi Camera ──► camera thread ──► newest frame ──► recognition t
                                                        │
                                                        ▼
                                                timeline of events
-Microphone ──► Moonshine speech-to-text ──► "stop" / "who is this" / "tell me more"
+Same frame ──► sign markers ──► navigator ──► "This is the kitchen" / next direction
+Microphone ──► Moonshine speech-to-text ──► "stop" / "who is this" / "take me to the bathroom"
 Wi-Fi scan ──► Google Geolocation ──► approximate location on the dashboard
 ```
 
@@ -139,6 +158,22 @@ Bluetooth earphones work once they are paired. If that library cannot load,
 CogniSight falls back to the `espeak-ng` voice. If no audio works, recognition
 and the dashboard keep running, and the Device page says why.
 
+### Signs and guidance
+
+- Each sign is an ArUco marker from OpenCV's 4x4 dictionary (50 possible
+  signs), printed about 14 cm wide with the room name below it. OpenCV reads
+  these markers in a few milliseconds per frame, from about 3 m away and at an
+  angle, which suits a camera worn on the body. Markers too small in the
+  picture (too far away) are ignored.
+- The caregiver writes one sentence per connection between two signs. Together
+  these form a small graph. A trip is the shortest path through that graph,
+  and one sentence is spoken per sign reached. A step is repeated if the wearer
+  stays in front of the same sign for 30 seconds.
+- Sign detection runs in its own thread and does not depend on face
+  recognition, so guidance keeps working if one part fails.
+- Limitation: guidance is given at signs, not between them. Signs belong where
+  a decision is needed: doorways and where a hall splits.
+
 ### Location
 
 The Pi lists nearby access points with `nmcli` (it does not need to connect to
@@ -156,6 +191,7 @@ Results are cached for five minutes.
 | Speech | moonshine-voice (Moonshine STT, Kokoro/Piper TTS) | Offline, small, Pi builds available, one library for both directions |
 | Server | Python, Flask | Simple, and already used by the team |
 | Dashboard | SolidJS, Vite, Leaflet maps | Fast on phones. Built once and served by the Pi |
+| Indoor signs | OpenCV ArUco markers (already part of the face stack) | Read reliably by a small camera, no extra hardware or library |
 | Location | Google Geolocation API with a Wi-Fi scan | No GPS hardware available |
 
 ## Privacy and safety choices
@@ -172,10 +208,16 @@ Results are cached for five minutes.
 
 ## Testing and status
 
-- 34 automated tests cover matching and the 0.30 cutoff, the embedding cache,
+- 50 automated tests cover matching and the 0.30 cutoff, the embedding cache,
   rejection of photos without faces, introduction wording and the two-minute
-  cooldown, voice command parsing, Wi-Fi scan parsing, honest location
-  labelling, and every dashboard API route. They run without a camera or GPU.
+  cooldown, voice command parsing, sign routes and guided trips (including a
+  wrong turn and a missing route), reading a generated marker image, floor plan
+  validation, Wi-Fi scan parsing, honest location labelling, and every
+  dashboard API route. They run without a camera or GPU.
+- A guided trip was run through the real program with a simulated camera
+  showing the Hallway and then the Bathroom sign. The device spoke "This is
+  the Hallway", the direction, and "You're at the Bathroom", and drew each sign
+  on the camera picture.
 - On a Windows laptop with a USB webcam, the full program was run end to end:
   a person was enrolled from the live camera through the dashboard API and was
   then recognised in the live picture at a distance of about 0.06, with the
@@ -195,8 +237,7 @@ Results are cached for five minutes.
 
 ## Future work
 
-- Recognise rooms with the same camera ("this is the kitchen") to replace
-  indoor navigation with something that helps the wearer directly.
+- Add a small motion sensor (IMU) to keep track of turns between signs.
 - Use a face detector with landmarks (YuNet or RetinaFace) for better
   alignment of tilted faces.
 - Add a caregiver login and HTTPS before any real-world use.
