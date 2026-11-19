@@ -16,14 +16,21 @@ function LocationMap(props) {
   let circle;
   let observer;
 
-  onMount(() => {
+  let fitted = false;
+
+  // Leaflet measures its box when it is created. Inside a <Show> the box can
+  // still be detached or 0x0 at that moment, which leaves a blank grey map.
+  // So start from a safe view, and fit the accuracy circle once the box has a
+  // real size.
+  function init() {
+    if (map || !container) return;
     map = L.map(container, {
       zoomControl: true,
       scrollWheelZoom: false,
       // One-finger drags should scroll the page on phones, not pan the map.
       dragging: !L.Browser.mobile,
       attributionControl: true,
-    });
+    }).setView([props.lat, props.lng], 13);
     map.attributionControl.setPrefix(false);
     const tiles = L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
       maxZoom: 19,
@@ -42,7 +49,7 @@ function LocationMap(props) {
 
     const colour = cssVar("--moss", "#2F6B4F");
     circle = L.circle([props.lat, props.lng], {
-      radius: props.accuracy,
+      radius: props.accuracy > 0 ? props.accuracy : 1,
       color: colour,
       weight: 2,
       fillColor: colour,
@@ -57,23 +64,31 @@ function LocationMap(props) {
       fillOpacity: 1,
       interactive: false,
     }).addTo(map);
-    fit();
 
-    observer = new ResizeObserver(() => map?.invalidateSize());
+    observer = new ResizeObserver(() => {
+      if (!map) return;
+      map.invalidateSize();
+      if (!fitted) fit();
+    });
     observer.observe(container);
-  });
+    fit();
+  }
+
+  onMount(() => requestAnimationFrame(init));
 
   function fit() {
-    if (!map || !circle) return;
+    if (!map || !circle || !container || container.clientWidth === 0 || container.clientHeight === 0) return;
+    map.invalidateSize();
     if (props.accuracy > 0) map.fitBounds(circle.getBounds(), { padding: [24, 24], maxZoom: 17 });
     else map.setView([props.lat, props.lng], 16);
+    fitted = true;
   }
 
   createEffect(() => {
     const lat = props.lat;
     const lng = props.lng;
     const accuracy = props.accuracy;
-    if (!map) return;
+    if (!map || !marker) return;
     marker.setLatLng([lat, lng]);
     circle.setLatLng([lat, lng]);
     circle.setRadius(accuracy > 0 ? accuracy : 1);
