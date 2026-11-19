@@ -56,7 +56,7 @@ function AddSign(props) {
               ref={nameInput}
               id="sign-name"
               autocomplete="off"
-              maxlength="60"
+              maxlength="40"
               required
               aria-required="true"
               aria-invalid={nameError() ? "true" : undefined}

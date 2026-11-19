@@ -5,6 +5,25 @@ and why, and how it is built. It is written so it can be used as source
 material for the project report. Statements about hardware say whether they
 were tested on the Raspberry Pi or not.
 
+## Documentation map
+
+Read in this order when writing the report:
+
+| Document | What it covers |
+|---|---|
+| This file | The problem, who it is for, the feature set, and the overall status |
+| [DESIGN_DECISIONS.md](DESIGN_DECISIONS.md) | Project history: the original proposal, the hardware constraints, every major decision with the alternatives considered, and what was deliberately not built |
+| [ARCHITECTURE.md](ARCHITECTURE.md) | How the software is organised: the process and its threads, data storage, modules, installation, and failure handling |
+| [features/face-recognition.md](features/face-recognition.md) | Contextual face recognition in depth |
+| [features/speech-and-voice.md](features/speech-and-voice.md) | Everything the device says and understands |
+| [features/signposts.md](features/signposts.md) | Talking signposts and indoor guidance, including the floor plan editor |
+| [features/caregiver-dashboard.md](features/caregiver-dashboard.md) | The caregiver web app, page by page, and its design system |
+| [features/location.md](features/location.md) | Approximate outdoor location from Wi-Fi |
+| [HARDWARE.md](HARDWARE.md) | The parts, their limits, and how they connect |
+| [TESTING.md](TESTING.md) | All test evidence, what is not yet verified, and the Pi acceptance checklist |
+| [DEMO.md](DEMO.md) | The demonstration script for examiners |
+| [API.md](API.md) | The device's HTTP API, endpoint by endpoint |
+
 ## The problem
 
 People living with dementia often fail to recognise someone they should know:
@@ -36,22 +55,31 @@ recognise and see what the device is doing.
    for example "This is Ravi, your neighbour." Unknown faces are marked on the
    dashboard but are not announced.
 2. **Spoken introductions without repetition.** A person is introduced the
-   moment they are recognised, and then not again for two minutes. This
+   moment they are recognised, and again only after they have been out of view
+   for two minutes, so someone who stays in the room is introduced once. This
    replaces an earlier "three matches in a row" rule that felt to the wearer
    like the device was hesitating. Fewer repeated introductions is the main
    human benefit.
-3. **Voice commands (optional).** "Stop" or "quiet" cuts speech off. "Who is
-   this?" repeats the introduction. "Tell me more" reads the caregiver's note
-   ("Visits on Sundays."). Speech recognition runs on the Pi, offline.
+3. **Voice commands (optional, needs a microphone).** "Stop" or "quiet" cuts
+   speech off and ends a guided trip. "Who is this?" repeats the
+   introduction. "Tell me more" reads the caregiver's note ("Visits on
+   Sundays."). "Take me to the bathroom" starts a guided trip (see 5), and
+   "Where am I?" names the current room. Speech recognition runs on the Pi,
+   offline.
 4. **Caregiver dashboard.** A web app served by the Pi, usable from a phone on
    the same Wi-Fi or on a monitor attached to the Pi:
    - **Live**: the camera picture with names drawn on faces, subtitles showing
-     exactly what the wearer just heard, who is with them now, and a timeline
-     of the day (who was seen, what was said, which commands were heard).
+     exactly what the wearer just heard, who is with them now and in which
+     room, a "Guide them to…" card that shows a trip step by step, and a
+     timeline of the day (who was seen, which rooms they moved through, what
+     was said, which commands were heard).
    - **People**: add someone by taking a photo with the device camera or
      uploading one. Edit relationship and note. Add more photos from different
      angles to make recognition steadier.
-   - **Place**: an approximate location of the device (see below).
+   - **Home**: the floor plan editor and the list of signs, with directions
+     between them and printable sign sheets (see 5 and 6).
+   - **Place**: which room the wearer is in (from the last sign read) and
+     today's room changes, plus an approximate outdoor location (see 7).
    - **Device**: camera, recognition, speech, and listening status, plus the
      address a phone can open.
 5. **Talking signposts (indoor guidance).** Printed signs (camera-readable
@@ -91,7 +119,8 @@ navigation, indoor navigation, and a caregiver dashboard.
   coordinates to about 1 km. A key was eventually obtained. Google uses Wi-Fi
   only when at least two access points are visible. With fewer, it falls back
   to the internet address. In the hostel, only one access point was visible, so
-  the result was the Vijayawada area, about 2.7 km wide.
+  the result was the Vijayawada area: an accuracy radius of about 2.7 km, so
+  an area about 5.4 km across.
 - **Indoor navigation was redesigned around signs.** The earlier version let a
   caregiver type a map of rooms and preview a route, but nothing sensed where
   the wearer actually was, and the Pi has no compass or gyroscope to know which
@@ -162,7 +191,7 @@ and the dashboard keep running, and the Device page says why.
 
 - Each sign is an ArUco marker from OpenCV's 4x4 dictionary (50 possible
   signs), printed about 14 cm wide with the room name below it. OpenCV reads
-  these markers in a few milliseconds per frame, from about 3 m away and at an
+  these markers in a few milliseconds per frame, from about 2.5 m away and at an
   angle, which suits a camera worn on the body. Markers too small in the
   picture (too far away) are ignored.
 - The caregiver writes one sentence per connection between two signs. Together
@@ -208,7 +237,7 @@ Results are cached for five minutes.
 
 ## Testing and status
 
-- 50 automated tests cover matching and the 0.30 cutoff, the embedding cache,
+- 55 automated tests cover matching and the 0.30 cutoff, the embedding cache,
   rejection of photos without faces, introduction wording and the two-minute
   cooldown, voice command parsing, sign routes and guided trips (including a
   wrong turn and a missing route), reading a generated marker image, floor plan
@@ -222,7 +251,7 @@ Results are cached for five minutes.
   a person was enrolled from the live camera through the dashboard API and was
   then recognised in the live picture at a distance of about 0.06, with the
   introduction generated. Location returned the internet-address estimate
-  (about 2.7 km).
+  (an accuracy radius of about 2.7 km).
 - **Not yet tested on the Raspberry Pi:** the CSI camera under this program,
   DeepFace speed on the Pi's CPU, moonshine-voice audio over Bluetooth, and the
   Wi-Fi scan with `nmcli`. The camera itself was confirmed working on the Pi
@@ -233,7 +262,7 @@ Results are cached for five minutes.
 - Meghana: facial recognition and contextual information
 - Sharanya: outdoor location
 - Jahnvi: caregiver dashboard and integration
-- Jahnvi and Archisha: indoor navigation (re-scoped, see above)
+- Jahnvi and Archisha: indoor navigation, now talking signposts (see above)
 
 ## Future work
 

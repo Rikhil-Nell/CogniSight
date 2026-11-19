@@ -150,7 +150,7 @@ export const deletePhoto = (name, filename) =>
 export const photoUrl = (name, filename) => personPath(name) + "/photos/" + enc(filename);
 
 // Location
-export const getLocation = () => request("/api/location", { timeout: 20000 });
+export const getLocation = () => request("/api/location", { timeout: 30000 });
 export const refreshLocation = () => request("/api/location/refresh", { method: "POST", timeout: 30000 });
 
 // Home: signs, directions between them, the floor plan, and guiding

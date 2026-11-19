@@ -21,7 +21,7 @@ import {
 // pointing right and 90 pointing down (docs/API.md, "Home").
 const GRID = 0.5;
 const ZONE_ANGLE = 70; // How wide the camera can read a sign from, in degrees.
-const ZONE_LENGTH = 3; // How far away it can read one, in metres.
+const ZONE_LENGTH = 2.5; // How far away it can read a 14 cm sign, in metres (measured limit of the detector).
 const SIGN_OFFSET = 0.08; // Signs sit just off the wall, on the reading side.
 const MIN_WALL = 0.25;
 const UNDO_LIMIT = 100;

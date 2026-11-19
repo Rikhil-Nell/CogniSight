@@ -104,7 +104,7 @@ signs while the dashboard ticks off the route.
 | Voice commands do nothing | Bluetooth earphone mics are unreliable on the Pi. Use a USB microphone |
 | Phone can't open the dashboard | Phone and Pi must be on the same Wi-Fi. Try the numeric address on the Device page |
 | Someone is not recognised | Add more photos of them, facing the camera, in similar light |
-| A sign is not read | Walk closer (about 3 m or less), face it, and make sure it is printed at full A4 size and lit |
+| A sign is not read | Walk closer (about 2.5 m or less), face it, and make sure it is printed at full A4 size and lit |
 
 ## Commands
 

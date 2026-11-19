@@ -29,7 +29,7 @@ export function placeName(name) {
   const text = (name || "").trim();
   if (!text) return "this room";
   if (/^the\s/i.test(text)) return "the " + text.slice(4);
-  if (/^\S+'s\b/i.test(text)) return text;
+  if (/^\S+['’]s(\s|$)/i.test(text) || /^(my|your)\s/i.test(text)) return text;
   const lowered = /^[A-Z][a-z]/.test(text) ? text.charAt(0).toLowerCase() + text.slice(1) : text;
   return "the " + lowered;
 }

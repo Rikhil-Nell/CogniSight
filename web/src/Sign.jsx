@@ -253,7 +253,7 @@ export default function Sign() {
               <input
                 id="edit-sign-name"
                 autocomplete="off"
-                maxlength="60"
+                maxlength="40"
                 required
                 aria-required="true"
                 aria-invalid={nameError() ? "true" : undefined}
@@ -376,7 +376,7 @@ export default function Sign() {
                               <input
                                 id={`way-text-${i}`}
                                 autocomplete="off"
-                                maxlength="200"
+                                maxlength="240"
                                 placeholder="The bathroom is the second door on your right."
                                 aria-invalid={invalid().has(i) ? "true" : undefined}
                                 value={row().text}

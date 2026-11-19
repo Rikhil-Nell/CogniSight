@@ -106,7 +106,7 @@ the camera when absent) → 201 person.
 
 Signs are printed ArUco markers (dictionary 4x4_50, ids 0–49) placed beside
 doors. The device recognises a sign when the camera sees its marker large
-enough (about 3 m or closer). Stored in `data/signs.json`.
+enough (about 2.5 m or closer for a sign printed at 14 cm). Stored in `data/signs.json`.
 
 A sign:
 
@@ -147,11 +147,14 @@ it. Limits: width and height 2–50, 400 walls, 100 doors, 60 labels.
 {"signs": [sign, ...], "links": [link, ...], "plan": plan,
  "room": {"id": 3, "name": "Hallway", "since": 1763539000.0, "seen_at": 1763540000.1} ,
  "guide": {"destination": {"id": 5, "name": "Bathroom"}, "route": [1, 3, 5],
-           "at": 3, "said": "The bathroom is the second door on your right.", "started": 1763539990.0}}
+           "at": 3, "said": "The bathroom is the second door on your right.", "started": 1763539990.0,
+           "arrived": null}}
 ```
 
 `room` is where the wearer was last seen (the last sign the camera read), or
-null. `guide` is the trip in progress, or null. `route` is the planned sign ids
+null. When the destination's sign is reached, `arrived` is set to that time
+and `at` to the destination; the finished trip stays visible for 20 seconds
+and then `guide` becomes null. `guide` is the trip in progress, or null. `route` is the planned sign ids
 from where they started, `at` is the last sign seen on the way (null until the
 first one).
 

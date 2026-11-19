@@ -224,6 +224,11 @@ export default function Place() {
       const from = n === null ? "nearby Wi-Fi access points" : plural(n, "nearby Wi-Fi access point");
       return `Placed from ${from}, within about ${metres(accuracy())}.`;
     }
+    if (Number.isFinite(d.access_points) && d.access_points >= 2) {
+      return `Google could not match the ${d.access_points} nearby Wi-Fi access points, so it placed the device from its internet connection. This is a rough area, about ${widthKm(
+        accuracy(),
+      )} wide.`;
+    }
     return `Only the internet connection's location was available, so this is a rough area, about ${widthKm(
       accuracy(),
     )} wide. Google needs at least two Wi-Fi access points in range for a closer fix.`;

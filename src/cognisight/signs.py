@@ -19,7 +19,9 @@ import threading
 import time
 
 MARKER_COUNT = 50
-MIN_MARKER_SIDE = 36  # pixels at 640x480; smaller is too far away to act on
+MIN_MARKER_SIDE = 24  # pixels at 640x480. A 14 cm sign is about 74/d px wide at d metres
+# on the Pi Camera Module 2 (62.2° wide), so 24 px is about 3 m. In practice the
+# detector itself stops decoding below about 30 px, so signs read to about 2.5 m.
 RECENT_SECONDS = 120  # a sign seen this recently tells us where they are
 ARRIVAL_COOLDOWN = 120  # "This is the kitchen." at most this often per sign
 STEP_REPEAT = 30  # repeat a guidance step if they linger in front of a sign
@@ -310,9 +312,10 @@ class Navigator:
     dashboard timeline.
     """
 
-    def __init__(self, store, say, event=lambda *args: None, clock=time.time):
+    def __init__(self, store, say, event=lambda *args: None, clock=time.time, can_speak=lambda: True):
         self.store = store
         self._say = say
+        self._can_speak = can_speak
         self._event = event
         self._clock = clock
         self._lock = threading.RLock()
@@ -334,6 +337,7 @@ class Navigator:
             return
         with self._lock:
             now = self._clock()
+            previous_sighting = self.last_seen.get(sign_id, -math.inf)
             self.last_seen[sign_id] = now
             if self.room is None or self.room["id"] != sign_id:
                 self.room = {"id": sign_id, "name": sign["name"], "since": now, "seen_at": now}
@@ -344,7 +348,10 @@ class Navigator:
             if self.guide is not None and not self.guide.get("arrived"):
                 self._guide_step(sign, now)
                 return
-            if now - self._last_arrival.get(sign_id, -math.inf) >= ARRIVAL_COOLDOWN:
+            # Name the room when they arrive, not every few minutes while they
+            # stay in front of the sign, and not before speech can be heard.
+            away = now - previous_sighting >= ARRIVAL_COOLDOWN or self._last_arrival.get(sign_id) is None
+            if away and now - self._last_arrival.get(sign_id, -math.inf) >= ARRIVAL_COOLDOWN and self._can_speak():
                 self._last_arrival[sign_id] = now
                 text = "This is {}.".format(the(sign["name"]))
                 if sign.get("say_note") and sign.get("note"):
@@ -373,7 +380,10 @@ class Navigator:
         # A sign passed on a trip has had its say; don't name it again on the way back.
         self._last_arrival[sign_id] = now
         path = self.store.route(sign_id, destination["id"])
-        if guide["at"] != sign_id and sign_id not in guide["visited"]:
+        if sign_id in guide["visited"]:
+            # Back at a sign already passed: forget the detour after it.
+            guide["visited"] = guide["visited"][: guide["visited"].index(sign_id) + 1]
+        else:
             guide["visited"].append(sign_id)
         guide["at"] = sign_id
         self._last_step = now

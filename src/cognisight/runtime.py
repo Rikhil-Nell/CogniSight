@@ -28,7 +28,7 @@ from cognisight.voice import Announcer, Listener, NullSpeaker, load_speaker, par
 SEEN_GAP_SECONDS = 30
 KNOWN_COLOR = (79, 107, 47)  # BGR moss
 UNKNOWN_COLOR = (22, 138, 201)  # BGR marigold
-SIGN_COLOR = (140, 91, 59)  # BGR slate blue
+SIGN_COLOR = (138, 95, 47)  # BGR of the dashboard's route blue, #2F5F8A
 SIGN_INTERVAL = 0.25
 
 
@@ -95,7 +95,9 @@ class Runtime:
         self._signs_error = None
         self.navigator = None
         if signs is not None:
-            self.navigator = Navigator(signs, say=self.announcer.say, event=self.event)
+            self.navigator = Navigator(
+                signs, say=self.announcer.say, event=self.event, can_speak=self.announcer.can_speak
+            )
 
     # ------------------------------------------------------------ lifecycle
 
@@ -306,6 +308,7 @@ class Runtime:
                 continue
             try:
                 found = detector.detect(frame)
+                self._signs_error = None
             except Exception as exc:
                 self._signs_error = "Reading signs failed: {}".format(exc)
                 found = []
@@ -344,6 +347,16 @@ class Runtime:
 
     def _on_heard(self, text):
         command = parse_command(text)
+        # Over a loudspeaker the microphone hears the device itself ("Let's go
+        # to the bathroom" sounds like a request). While it is talking, only
+        # "stop" counts.
+        talking = getattr(self.announcer.speaker, "is_talking", lambda: False)
+        try:
+            busy = bool(talking())
+        except Exception:
+            busy = False
+        if busy and command != "stop":
+            return
         if command == "go" or (command is None and "where am i" in text.lower()):
             self._navigate_by_voice(text)
             command = command or "where"

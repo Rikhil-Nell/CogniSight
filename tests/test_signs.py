@@ -161,6 +161,28 @@ class NavigatorTests(unittest.TestCase):
         self.assertEqual(self.said[-1], "Go back through this door.")
         self.assertEqual(self.nav.state()["guide"]["route"], [self.kitchen, self.hallway, self.bathroom])
 
+    def test_going_back_past_a_sign_does_not_repeat_it_in_the_route(self):
+        self.nav.sighting(self.bedroom)
+        self.nav.start(self.bathroom)
+        self.nav.sighting(self.hallway)
+        self.nav.sighting(self.kitchen)  # wrong way
+        self.nav.sighting(self.hallway)  # back again
+        self.assertEqual(self.nav.state()["guide"]["route"], [self.bedroom, self.hallway, self.bathroom])
+
+    def test_rooms_are_not_named_before_speech_works(self):
+        quiet = Navigator(self.store, self.said.append, clock=self.clock, can_speak=lambda: False)
+        quiet.sighting(self.kitchen)
+        self.assertEqual(self.said, [])
+        loud = Navigator(self.store, self.said.append, clock=self.clock)
+        loud.sighting(self.kitchen)
+        self.assertEqual(len(self.said), 1)
+
+    def test_staying_in_a_room_names_it_once(self):
+        for _ in range(20):
+            self.nav.sighting(self.kitchen)
+            self.clock.now += 30
+        self.assertEqual(len(self.said), 1)
+
     def test_no_route_is_said_plainly(self):
         self.nav.start(self.kitchen)
         self.nav.sighting(self.bathroom)
@@ -189,9 +211,9 @@ class DetectionTests(unittest.TestCase):
         dictionary = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_4X4_50)
         frame = np.full((480, 640, 3), 255, np.uint8)
         near = cv2.aruco.generateImageMarker(dictionary, 5, 120)
-        far = cv2.aruco.generateImageMarker(dictionary, 9, 24)
+        far = cv2.aruco.generateImageMarker(dictionary, 9, 18)
         frame[100:220, 100:220] = near[:, :, None]
-        frame[300:324, 400:424] = far[:, :, None]
+        frame[300:318, 400:418] = far[:, :, None]
         found = MarkerDetector().detect(frame)
         self.assertEqual([marker_id for marker_id, _ in found], [5])
 

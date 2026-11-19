@@ -49,7 +49,9 @@ def parse_command(text):
 
 class Announcer:
     """Decides when to speak. A person is introduced the moment they are
-    recognised, then not again for ``cooldown`` seconds."""
+    recognised. They are introduced again only after they have been out of
+    view for ``cooldown`` seconds, so someone who stays in the room is not
+    re-introduced over and over."""
 
     def __init__(self, speaker, cooldown=COOLDOWN_SECONDS, clock=time.monotonic, on_said=None):
         self.speaker = speaker
@@ -65,12 +67,17 @@ class Announcer:
         """Call for each recognised person on each pass. Returns what was said, or None."""
         with self._lock:
             now = self._clock()
-            if not self.enabled:
+            if not self.can_speak():
+                # Not heard, so not counted: they are introduced once speech works.
                 return None
-            if now - self._last.get(name, -math.inf) < self.cooldown:
-                return None
+            previous = self._last.get(name, -math.inf)
             self._last[name] = now
+            if now - previous < self.cooldown:
+                return None
         return self.say(introduction(name, relationship))
+
+    def can_speak(self):
+        return self.enabled and bool(getattr(self.speaker, "available", True))
 
     def say(self, text):
         if not self.enabled:
